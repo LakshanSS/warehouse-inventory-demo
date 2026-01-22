@@ -40,7 +40,7 @@ func LoadConfig() (*Config, error) {
 		password := getEnvOrDefault("DB_PASSWORD", "YourStrong@Passw0rd")
 		database := getEnvOrDefault("DB_NAME", "InventoryDB")
 
-		dbURL = fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s&encrypt=disable",
+		dbURL = fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s&encrypt=true&trustServerCertificate=false",
 			user, password, server, dbPort, database)
 	}
 
