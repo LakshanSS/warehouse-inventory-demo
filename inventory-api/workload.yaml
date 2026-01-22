@@ -33,7 +33,7 @@ configurations:
         secretKeyRef:
           name: inventory-db-password
           key: value
-    - name:: DB_NAME
+    - name: DB_NAME
       valueFrom:
         secretKeyRef:
           name: inventory-db-name
