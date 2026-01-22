@@ -14,8 +14,8 @@ COPY . .
 
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
-# Build the binary
-RUN go build -a -installsuffix cgo -o /go/bin/inventory-api -buildvcs=false
+# Generate go.sum and build the binary
+RUN go mod tidy && go build -a -installsuffix cgo -o /go/bin/inventory-api -buildvcs=false
 
 FROM alpine:3.19
 
