@@ -11,29 +11,29 @@ endpoints:
 
 configurations:
   env:
-    - key: ENVIRONMENT
+    - name: ENVIRONMENT
       value: production
-    - key: DB_SERVER
+    - name: DB_SERVER
       valueFrom:
         secretRef:
           name: inventory-db-server
           key: value
-    - key: DB_PORT
+    - name: DB_PORT
       valueFrom:
         secretRef:
           name: inventory-db-port
           key: value
-    - key: DB_USER
+    - name: DB_USER
       valueFrom:
         secretRef:
           name: inventory-db-user
           key: value
-    - key: DB_PASSWORD
+    - name: DB_PASSWORD
       valueFrom:
         secretRef:
           name: inventory-db-password
           key: value
-    - key: DB_NAME
+    - name:: DB_NAME
       valueFrom:
         secretRef:
           name: inventory-db-name
