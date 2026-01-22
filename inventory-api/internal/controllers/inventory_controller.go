@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openchoreo/inventory-api/internal/models"
 	"github.com/openchoreo/inventory-api/internal/repositories"
@@ -55,6 +56,7 @@ func (c *InventoryController) Health(ctx *gin.Context) {
 
 		dbStatus = "healthy"
 		if err := c.repo.Ping(reqCtx); err != nil {
+			logrus.WithError(err).Warn("Database ping failed")
 			dbStatus = "unhealthy"
 		}
 	}
@@ -80,6 +82,7 @@ func (c *InventoryController) GetInventory(ctx *gin.Context) {
 	products, err := c.repo.GetAllProducts(reqCtx)
 	if err != nil {
 		// Fallback to mock data on database error
+		logrus.WithError(err).Warn("Database query failed, returning mock data")
 		ctx.JSON(http.StatusOK, c.mockData)
 		return
 	}
