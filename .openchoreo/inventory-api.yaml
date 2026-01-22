@@ -14,7 +14,7 @@ spec:
     name: docker
     systemParameters:
       repository:
-        url: "https://github.com/lakshanss/warehouse-inventory-demo"
+        url: "https://github.com/LakshanSS/warehouse-inventory-demo"
         revision:
           branch: "main"
         appPath: "/inventory-api"
@@ -87,7 +87,7 @@ spec:
     name: docker
     systemParameters:
       repository:
-        url: "https://github.com/lakshanss/warehouse-inventory-demo"
+        url: "https://github.com/LakshanSS/warehouse-inventory-demo"
         revision:
           branch: "main"
         appPath: "/inventory-api"
