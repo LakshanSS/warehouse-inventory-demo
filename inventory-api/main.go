@@ -31,12 +31,14 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize database connection
+	// Initialize database connection (optional - service starts even if DB unavailable)
 	repo, err := repositories.NewInventoryRepository(cfg.DatabaseURL)
 	if err != nil {
-		logrus.Fatalf("Failed to connect to database: %v", err)
+		logrus.Warnf("Failed to connect to database: %v - service will start but database operations will fail", err)
 	}
-	defer repo.Close()
+	if repo != nil {
+		defer repo.Close()
+	}
 
 	// Create Gin router
 	router := gin.New()

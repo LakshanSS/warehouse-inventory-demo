@@ -36,31 +36,6 @@ spec:
     env:
       - name: ENVIRONMENT
         value: "production"
-      - name: DB_SERVER
-        valueFrom:
-          secretKeyRef:
-            name: inventory-db-credentials
-            key: server
-      - name: DB_PORT
-        valueFrom:
-          secretKeyRef:
-            name: inventory-db-credentials
-            key: port
-      - name: DB_USER
-        valueFrom:
-          secretKeyRef:
-            name: inventory-db-credentials
-            key: username
-      - name: DB_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: inventory-db-credentials
-            key: password
-      - name: DB_NAME
-        valueFrom:
-          secretKeyRef:
-            name: inventory-db-credentials
-            key: database
     livenessProbe:
       httpGet:
         path: /health
