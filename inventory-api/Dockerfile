@@ -3,7 +3,7 @@ FROM golang:1.22-alpine as build-env
 RUN mkdir /app
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 
 # Create non-root user
