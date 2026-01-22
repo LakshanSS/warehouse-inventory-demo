@@ -6,7 +6,24 @@ import { InventoryTable } from '@/components/InventoryTable'
 import { StockIndicator } from '@/components/StockIndicator'
 import { Product } from '@/lib/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9090'
+function getApiUrl() {
+  if (typeof window === 'undefined') return 'http://localhost:9090'
+
+  const hostname = window.location.hostname
+  const port = window.location.port
+
+  // If running on OpenChoreo (openchoreoapis.localhost)
+  if (hostname.includes('openchoreoapis.localhost')) {
+    const portPart = port ? `:${port}` : ''
+    // Extract environment from hostname (e.g., "development" from "inventory-dashboard-development.openchoreoapis.localhost")
+    const envMatch = hostname.match(/-(\w+)\.openchoreoapis/)
+    const env = envMatch ? envMatch[1] : 'development'
+    return `http://${env}.openchoreoapis.localhost${portPart}/inventory-api`
+  }
+
+  // Default for local development
+  return 'http://localhost:9090'
+}
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
@@ -18,7 +35,8 @@ export default function Home() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`${API_URL}/inventory`)
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/inventory`)
       if (!response.ok) throw new Error('Failed to fetch inventory')
       const data = await response.json()
       setProducts(data)
