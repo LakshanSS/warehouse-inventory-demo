@@ -8,3 +8,34 @@ endpoints:
     port: 9090
     type: REST
     schemaFile: docs/openapi.yaml
+
+containers:
+  main:
+    env:
+      - key: ENVIRONMENT
+        value: production
+      - key: DB_SERVER
+        valueFrom:
+          secretRef:
+            name: inventory-db-server
+            key: value
+      - key: DB_PORT
+        valueFrom:
+          secretRef:
+            name: inventory-db-port
+            key: value
+      - key: DB_USER
+        valueFrom:
+          secretRef:
+            name: inventory-db-user
+            key: value
+      - key: DB_PASSWORD
+        valueFrom:
+          secretRef:
+            name: inventory-db-password
+            key: value
+      - key: DB_NAME
+        valueFrom:
+          secretRef:
+            name: inventory-db-name
+            key: value
