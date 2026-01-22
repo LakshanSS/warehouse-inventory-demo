@@ -1,0 +1,10 @@
+apiVersion: openchoreo.dev/v1alpha1
+
+metadata:
+  name: inventory-api
+
+endpoints:
+  - name: inventory-api
+    port: 9090
+    type: REST
+    schemaFile: docs/openapi.yaml

@@ -1,0 +1,9 @@
+apiVersion: openchoreo.dev/v1alpha1
+
+metadata:
+  name: inventory-dashboard
+
+endpoints:
+  - name: inventory-dashboard
+    port: 3000
+    type: HTTP

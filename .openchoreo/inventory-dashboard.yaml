@@ -1,0 +1,72 @@
+# OpenChoreo Component Configuration - Inventory Dashboard
+# Next.js frontend for warehouse inventory management
+
+apiVersion: openchoreo.dev/v1alpha1
+kind: Component
+metadata:
+  name: inventory-dashboard
+spec:
+  owner:
+    projectName: default
+  componentType: deployment/web-application
+  autoDeploy: true
+  workflow:
+    name: docker
+    systemParameters:
+      repository:
+        url: "https://github.com/lakshanss/warehouse-inventory-demo"
+        revision:
+          branch: "main"
+        appPath: "/inventory-dashboard"
+    parameters:
+      docker:
+        context: "/inventory-dashboard"
+        filePath: "/inventory-dashboard/Dockerfile"
+  parameters:
+    exposed: true
+    replicas: 1
+    port: 3000
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    env:
+      - name: NEXT_PUBLIC_API_URL
+        value: "https://inventory-api.${ENVIRONMENT}.openchoreoapis.localhost"
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+---
+apiVersion: openchoreo.dev/v1alpha1
+kind: ComponentWorkflowRun
+metadata:
+  name: inventory-dashboard-build-01
+spec:
+  owner:
+    projectName: "default"
+    componentName: "inventory-dashboard"
+  workflow:
+    name: docker
+    systemParameters:
+      repository:
+        url: "https://github.com/lakshanss/warehouse-inventory-demo"
+        revision:
+          branch: "main"
+        appPath: "/inventory-dashboard"
+    parameters:
+      docker:
+        context: "/inventory-dashboard"
+        filePath: "/inventory-dashboard/Dockerfile"
