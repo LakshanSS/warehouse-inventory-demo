@@ -15,26 +15,26 @@ configurations:
       value: production
     - name: DB_SERVER
       valueFrom:
-        secretRef:
+        secretKeyRef:
           name: inventory-db-server
           key: value
     - name: DB_PORT
       valueFrom:
-        secretRef:
+        secretKeyRef:
           name: inventory-db-port
           key: value
     - name: DB_USER
       valueFrom:
-        secretRef:
+        secretKeyRef:
           name: inventory-db-user
           key: value
     - name: DB_PASSWORD
       valueFrom:
-        secretRef:
+        secretKeyRef:
           name: inventory-db-password
           key: value
     - name:: DB_NAME
       valueFrom:
-        secretRef:
+        secretKeyRef:
           name: inventory-db-name
           key: value
