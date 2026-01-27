@@ -17,54 +17,30 @@ metadata:
 spec:
   # ==========================================================================
   # Parameter Schema
-  # Defines what users can configure when triggering this workflow
+  # Uses compact string format: type | default=value description="..."
   # ==========================================================================
   schema:
     parameters:
       # Source repository containing Terraform configs
       repository:
-        url:
-          type: string
-          description: "Git repository URL containing Terraform configurations"
-          default: "https://github.com/LakshanSS/warehouse-inventory-demo"
-        branch:
-          type: string
-          description: "Git branch to use"
-          default: "main"
-        terraformPath:
-          type: string
-          description: "Path to Terraform configs within the repository"
-          default: "/demo/infrastructure/terraform/azure-sql"
+        url: string | default=https://github.com/LakshanSS/warehouse-inventory-demo description="Git repository URL containing Terraform configurations"
+        branch: string | default=main description="Git branch to use"
+        terraformPath: string | default=/demo/infrastructure/terraform/azure-sql description="Path to Terraform configs within the repository"
 
       # Azure resource configuration
       azure:
-        resourceGroup:
-          type: string
-          description: "Azure Resource Group name (must exist)"
-        location:
-          type: string
-          description: "Azure region for resources"
-          default: "eastus"
+        resourceGroup: string | description="Azure Resource Group name (must exist)"
+        location: string | default=eastus description="Azure region for resources"
 
       # Database configuration
       database:
-        serverName:
-          type: string
-          description: "SQL Server name (must be globally unique in Azure)"
-        name:
-          type: string
-          description: "Database name"
-        sku:
-          type: string
-          description: "Database SKU/pricing tier"
-          default: "Basic"
+        serverName: string | description="SQL Server name (must be globally unique in Azure)"
+        name: string | description="Database name"
+        sku: string | default=Basic description="Database SKU/pricing tier"
 
       # Output configuration
       output:
-        secretNamespace:
-          type: string
-          description: "Namespace for the output connection secret"
-          default: "default"
+        secretNamespace: string | default=default description="Namespace for the output connection secret"
 
   # ==========================================================================
   # Run Template
@@ -76,11 +52,6 @@ spec:
     metadata:
       name: ${metadata.workflowRunName}
       namespace: openchoreo-ci-${metadata.orgName}
-      labels:
-        openchoreo.dev/workflow: provision-azure-sql-database
-        openchoreo.dev/workflow-run: ${metadata.workflowRunName}
-        category: infrastructure
-        provider: azure
     spec:
       serviceAccountName: workflow-sa
       arguments:
