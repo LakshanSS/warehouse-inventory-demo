@@ -29,7 +29,7 @@ spec:
       repository:
         url: "https://github.com/LakshanSS/warehouse-inventory-demo"
         branch: "main"
-        terraformPath: "/demo/infrastructure/terraform/azure-sql"
+        terraformPath: "/infrastructure/terraform/azure-sql"
       azure:
         resourceGroup: "openchoreo-demo-rg"
         location: "eastus"

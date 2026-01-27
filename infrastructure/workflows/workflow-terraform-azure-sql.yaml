@@ -25,7 +25,7 @@ spec:
       repository:
         url: string | default=https://github.com/LakshanSS/warehouse-inventory-demo description="Git repository URL containing Terraform configurations"
         branch: string | default=main description="Git branch to use"
-        terraformPath: string | default=/demo/infrastructure/terraform/azure-sql description="Path to Terraform configs within the repository"
+        terraformPath: string | default=/infrastructure/terraform/azure-sql description="Path to Terraform configs within the repository"
 
       # Azure resource configuration
       azure:
