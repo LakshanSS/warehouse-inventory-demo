@@ -1,0 +1,41 @@
+# WorkflowRun to provision the inventory demo database
+#
+# This triggers the Terraform workflow to create:
+#   - Azure SQL Server: pge-demo-db-server
+#   - Azure SQL Database: pge-demo-db
+#   - Kubernetes Secret: pge-demo-db-connection
+#
+# Prerequisites:
+#   1. Azure credentials secret must exist (see README.md)
+#   2. Workflow and ClusterWorkflowTemplate must be installed
+#
+# Usage:
+#   kubectl apply -f workflow-run-provision-inventory-db.yaml
+#
+# Monitor:
+#   kubectl get workflowrun -w
+#   kubectl logs -n openchoreo-ci-default -l workflows.argoproj.io/workflow=provision-inventory-db-001 -f
+#
+# To re-run: increment the name (e.g., provision-inventory-db-002)
+
+apiVersion: openchoreo.dev/v1alpha1
+kind: WorkflowRun
+metadata:
+  name: provision-inventory-db-001
+spec:
+  workflow:
+    name: provision-azure-sql-database
+    parameters:
+      repository:
+        url: "https://github.com/LakshanSS/warehouse-inventory-demo"
+        branch: "main"
+        terraformPath: "/demo/infrastructure/terraform/azure-sql"
+      azure:
+        resourceGroup: "openchoreo-demo-rg"
+        location: "eastus"
+      database:
+        serverName: "pge-demo-db-server"
+        name: "pge-demo-db"
+        sku: "Standard_S0"
+      output:
+        secretNamespace: "default"

@@ -1,0 +1,112 @@
+# OpenChoreo Workflow for Azure SQL Database Provisioning
+# This defines the parameter schema and maps to the ClusterWorkflowTemplate
+#
+# Usage:
+#   1. Install: kubectl apply -f workflow-terraform-azure-sql.yaml
+#   2. Trigger: kubectl apply -f workflow-run-provision-inventory-db.yaml
+
+apiVersion: openchoreo.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: provision-azure-sql-database
+  namespace: default
+  labels:
+    category: infrastructure
+    provider: azure
+    resource-type: database
+spec:
+  # ==========================================================================
+  # Parameter Schema
+  # Defines what users can configure when triggering this workflow
+  # ==========================================================================
+  schema:
+    parameters:
+      # Source repository containing Terraform configs
+      repository:
+        url:
+          type: string
+          description: "Git repository URL containing Terraform configurations"
+          default: "https://github.com/LakshanSS/warehouse-inventory-demo"
+        branch:
+          type: string
+          description: "Git branch to use"
+          default: "main"
+        terraformPath:
+          type: string
+          description: "Path to Terraform configs within the repository"
+          default: "/demo/infrastructure/terraform/azure-sql"
+
+      # Azure resource configuration
+      azure:
+        resourceGroup:
+          type: string
+          description: "Azure Resource Group name (must exist)"
+        location:
+          type: string
+          description: "Azure region for resources"
+          default: "eastus"
+
+      # Database configuration
+      database:
+        serverName:
+          type: string
+          description: "SQL Server name (must be globally unique in Azure)"
+        name:
+          type: string
+          description: "Database name"
+        sku:
+          type: string
+          description: "Database SKU/pricing tier"
+          default: "Basic"
+
+      # Output configuration
+      output:
+        secretNamespace:
+          type: string
+          description: "Namespace for the output connection secret"
+          default: "default"
+
+  # ==========================================================================
+  # Run Template
+  # Generates the Argo Workflow when a WorkflowRun is created
+  # ==========================================================================
+  runTemplate:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Workflow
+    metadata:
+      name: ${metadata.workflowRunName}
+      namespace: openchoreo-ci-${metadata.orgName}
+      labels:
+        openchoreo.dev/workflow: provision-azure-sql-database
+        openchoreo.dev/workflow-run: ${metadata.workflowRunName}
+        category: infrastructure
+        provider: azure
+    spec:
+      serviceAccountName: workflow-sa
+      arguments:
+        parameters:
+          # Repository parameters
+          - name: git-repo
+            value: ${parameters.repository.url}
+          - name: git-branch
+            value: ${parameters.repository.branch}
+          - name: terraform-path
+            value: ${parameters.repository.terraformPath}
+          # Azure parameters
+          - name: resource-group
+            value: ${parameters.azure.resourceGroup}
+          - name: location
+            value: ${parameters.azure.location}
+          # Database parameters
+          - name: server-name
+            value: ${parameters.database.serverName}
+          - name: database-name
+            value: ${parameters.database.name}
+          - name: database-sku
+            value: ${parameters.database.sku}
+          # Output parameters
+          - name: output-secret-namespace
+            value: ${parameters.output.secretNamespace}
+      workflowTemplateRef:
+        clusterScope: true
+        name: terraform-azure-sql

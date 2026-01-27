@@ -1,0 +1,335 @@
+# ClusterWorkflowTemplate for Azure SQL Database Provisioning
+# This Argo Workflows template defines the execution steps for Terraform
+#
+# Steps:
+#   1. Clone repository with Terraform configs
+#   2. Terraform init (configure backend)
+#   3. Terraform plan (preview changes)
+#   4. Terraform apply (create resources)
+#   5. Save outputs to Kubernetes Secret
+
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: terraform-azure-sql
+  labels:
+    category: infrastructure
+    provider: azure
+    tool: terraform
+spec:
+  entrypoint: provision-database
+
+  # Parameters passed from Workflow CR
+  arguments:
+    parameters:
+      - name: git-repo
+        value: ""
+      - name: git-branch
+        value: "main"
+      - name: terraform-path
+        value: "/infrastructure/terraform/azure-sql"
+      - name: resource-group
+        value: ""
+      - name: location
+        value: "eastus"
+      - name: server-name
+        value: ""
+      - name: database-name
+        value: ""
+      - name: database-sku
+        value: "Basic"
+      - name: output-secret-namespace
+        value: "default"
+
+  templates:
+    # ==========================================================================
+    # Main Orchestration Template
+    # ==========================================================================
+    - name: provision-database
+      steps:
+        - - name: clone-repo
+            template: clone
+        - - name: terraform-init
+            template: init
+        - - name: terraform-plan
+            template: plan
+        - - name: terraform-apply
+            template: apply
+        - - name: save-outputs
+            template: save-to-secret
+
+    # ==========================================================================
+    # Step 1: Clone Repository
+    # ==========================================================================
+    - name: clone
+      container:
+        image: alpine/git:2.43.0
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "============================================"
+            echo "Step 1: Cloning Repository"
+            echo "============================================"
+            echo "Repository: {{workflow.parameters.git-repo}}"
+            echo "Branch: {{workflow.parameters.git-branch}}"
+            echo ""
+
+            # Clone the repository
+            git clone --depth 1 --branch {{workflow.parameters.git-branch}} \
+              {{workflow.parameters.git-repo}} /mnt/vol/source
+
+            echo ""
+            echo "Terraform configs location:"
+            ls -la /mnt/vol/source{{workflow.parameters.terraform-path}}
+
+            echo ""
+            echo "Clone complete!"
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+
+    # ==========================================================================
+    # Step 2: Terraform Init
+    # ==========================================================================
+    - name: init
+      container:
+        image: hashicorp/terraform:1.7
+        workingDir: /mnt/vol/source{{workflow.parameters.terraform-path}}
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "============================================"
+            echo "Step 2: Terraform Init"
+            echo "============================================"
+            echo ""
+
+            # Initialize Terraform with backend config
+            terraform init \
+              -backend-config="key={{workflow.parameters.database-name}}.tfstate" \
+              -input=false
+
+            echo ""
+            echo "Terraform initialized successfully!"
+        env:
+          - name: ARM_SUBSCRIPTION_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: subscription-id
+          - name: ARM_TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: tenant-id
+          - name: ARM_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-id
+          - name: ARM_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-secret
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+
+    # ==========================================================================
+    # Step 3: Terraform Plan
+    # ==========================================================================
+    - name: plan
+      container:
+        image: hashicorp/terraform:1.7
+        workingDir: /mnt/vol/source{{workflow.parameters.terraform-path}}
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "============================================"
+            echo "Step 3: Terraform Plan"
+            echo "============================================"
+            echo ""
+            echo "Configuration:"
+            echo "  Resource Group: {{workflow.parameters.resource-group}}"
+            echo "  Location: {{workflow.parameters.location}}"
+            echo "  Server Name: {{workflow.parameters.server-name}}"
+            echo "  Database Name: {{workflow.parameters.database-name}}"
+            echo "  Database SKU: {{workflow.parameters.database-sku}}"
+            echo ""
+
+            # Create plan
+            terraform plan \
+              -var="resource_group_name={{workflow.parameters.resource-group}}" \
+              -var="location={{workflow.parameters.location}}" \
+              -var="server_name={{workflow.parameters.server-name}}" \
+              -var="database_name={{workflow.parameters.database-name}}" \
+              -var="database_sku={{workflow.parameters.database-sku}}" \
+              -var="admin_username=$DB_ADMIN_USER" \
+              -var="admin_password=$DB_ADMIN_PASS" \
+              -out=/mnt/vol/tfplan \
+              -input=false
+
+            echo ""
+            echo "Plan saved to /mnt/vol/tfplan"
+        env:
+          - name: ARM_SUBSCRIPTION_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: subscription-id
+          - name: ARM_TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: tenant-id
+          - name: ARM_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-id
+          - name: ARM_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-secret
+          - name: DB_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: db-admin-username
+          - name: DB_ADMIN_PASS
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: db-admin-password
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+
+    # ==========================================================================
+    # Step 4: Terraform Apply
+    # ==========================================================================
+    - name: apply
+      container:
+        image: hashicorp/terraform:1.7
+        workingDir: /mnt/vol/source{{workflow.parameters.terraform-path}}
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "============================================"
+            echo "Step 4: Terraform Apply"
+            echo "============================================"
+            echo ""
+
+            # Apply the plan
+            terraform apply -auto-approve /mnt/vol/tfplan
+
+            echo ""
+            echo "============================================"
+            echo "Extracting Outputs"
+            echo "============================================"
+
+            # Save outputs for next step
+            terraform output -raw server_fqdn > /mnt/vol/server-fqdn.txt
+            terraform output -raw database_name > /mnt/vol/database-name.txt
+            terraform output -raw connection_string > /mnt/vol/connection-string.txt 2>/dev/null || echo "" > /mnt/vol/connection-string.txt
+
+            echo ""
+            echo "Resources created successfully!"
+            echo "  Server FQDN: $(cat /mnt/vol/server-fqdn.txt)"
+            echo "  Database: $(cat /mnt/vol/database-name.txt)"
+        env:
+          - name: ARM_SUBSCRIPTION_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: subscription-id
+          - name: ARM_TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: tenant-id
+          - name: ARM_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-id
+          - name: ARM_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: client-secret
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+
+    # ==========================================================================
+    # Step 5: Save Outputs to Kubernetes Secret
+    # ==========================================================================
+    - name: save-to-secret
+      serviceAccountName: workflow-sa
+      container:
+        image: bitnami/kubectl:1.28
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "============================================"
+            echo "Step 5: Saving Outputs to Secret"
+            echo "============================================"
+            echo ""
+
+            SERVER_FQDN=$(cat /mnt/vol/server-fqdn.txt)
+            DB_NAME=$(cat /mnt/vol/database-name.txt)
+            SECRET_NAME="{{workflow.parameters.database-name}}-connection"
+            NAMESPACE="{{workflow.parameters.output-secret-namespace}}"
+
+            echo "Creating secret: $SECRET_NAME in namespace: $NAMESPACE"
+
+            # Create or update the secret
+            kubectl create secret generic $SECRET_NAME \
+              --namespace=$NAMESPACE \
+              --from-literal=server=$SERVER_FQDN \
+              --from-literal=database=$DB_NAME \
+              --from-literal=port=1433 \
+              --dry-run=client -o yaml | kubectl apply -f -
+
+            echo ""
+            echo "Secret created successfully!"
+            echo ""
+            echo "Usage in workloads:"
+            echo "  env:"
+            echo "    - name: DB_SERVER"
+            echo "      valueFrom:"
+            echo "        secretKeyRef:"
+            echo "          name: $SECRET_NAME"
+            echo "          key: server"
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+
+  # Persistent volume for workflow data
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+  # Cleanup policy
+  ttlStrategy:
+    secondsAfterCompletion: 7200   # 2 hours after success
+    secondsAfterSuccess: 7200
+    secondsAfterFailure: 86400     # 24 hours after failure (for debugging)
