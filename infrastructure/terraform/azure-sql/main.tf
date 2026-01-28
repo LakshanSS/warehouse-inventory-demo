@@ -52,7 +52,7 @@ variable "database_name" {
 variable "database_sku" {
   description = "Database SKU/pricing tier"
   type        = string
-  default     = "GP_S_Gen5_2"
+  default     = "Basic"
 }
 
 variable "admin_username" {
