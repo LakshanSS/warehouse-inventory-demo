@@ -21,7 +21,7 @@
 apiVersion: openchoreo.dev/v1alpha1
 kind: WorkflowRun
 metadata:
-  name: provision-inventory-db-001
+  name: provision-inventory-db-003
 spec:
   workflow:
     name: provision-azure-sql-database
@@ -31,11 +31,11 @@ spec:
         branch: "main"
         terraformPath: "/infrastructure/terraform/azure-sql"
       azure:
-        resourceGroup: "openchoreo-demo-rg"
-        location: "eastus"
+        resourceGroup: "choreo-pge-demo"
+        location: "southindia"
       database:
-        serverName: "pge-demo-db-server"
-        name: "pge-demo-db"
-        sku: "Standard_S0"
+        serverName: "pge-demo-db-server-1"
+        name: "pge-demo-db-1"
+        sku: "GP_S_Gen5_2"
       output:
         secretNamespace: "default"

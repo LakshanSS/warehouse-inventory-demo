@@ -52,12 +52,7 @@ variable "database_name" {
 variable "database_sku" {
   description = "Database SKU/pricing tier"
   type        = string
-  default     = "Basic"
-
-  validation {
-    condition     = contains(["Basic", "Standard_S0", "Standard_S1", "Standard_S2", "Premium_P1"], var.database_sku)
-    error_message = "Invalid SKU. Must be one of: Basic, Standard_S0, Standard_S1, Standard_S2, Premium_P1"
-  }
+  default     = "GP_S_Gen5_2"
 }
 
 variable "admin_username" {
@@ -70,11 +65,6 @@ variable "admin_password" {
   description = "SQL Server admin password"
   type        = string
   sensitive   = true
-
-  validation {
-    condition     = length(var.admin_password) >= 12
-    error_message = "Password must be at least 12 characters long"
-  }
 }
 
 variable "tags" {
@@ -112,16 +102,7 @@ resource "azurerm_mssql_database" "main" {
   server_id    = azurerm_mssql_server.main.id
   sku_name     = var.database_sku
   collation    = "SQL_Latin1_General_CP1_CI_AS"
-  max_size_gb  = var.database_sku == "Basic" ? 2 : 10
-
-  # Prevent accidental deletion
-  lifecycle {
-    prevent_destroy = false
-  }
-
-  tags = merge(var.tags, {
-    resource_type = "sql-database"
-  })
+  max_size_gb  = 1
 }
 
 # Firewall rule - Allow Azure services

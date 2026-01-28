@@ -51,7 +51,7 @@ spec:
     kind: Workflow
     metadata:
       name: ${metadata.workflowRunName}
-      namespace: openchoreo-ci-${metadata.orgName}
+      namespace: openchoreo-ci-${metadata.namespaceName}
     spec:
       serviceAccountName: workflow-sa
       arguments:
