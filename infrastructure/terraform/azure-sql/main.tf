@@ -13,9 +13,9 @@ terraform {
 
   # Backend configuration - override via -backend-config flags
   backend "azurerm" {
-    resource_group_name  = "terraform-state-rg"
-    storage_account_name = "tfstatestore"
-    container_name       = "tfstate"
+    resource_group_name  = "choreo-pge-demo"
+    storage_account_name = "choreo-pge-demo-tfstatestore"
+    container_name       = "choreo-pge-demo-tfstate"
     key                  = "database.tfstate"
   }
 }

@@ -21,7 +21,7 @@
 apiVersion: openchoreo.dev/v1alpha1
 kind: WorkflowRun
 metadata:
-  name: provision-inventory-db-003
+  name: provision-inventory-db-run
 spec:
   workflow:
     name: provision-azure-sql-database
