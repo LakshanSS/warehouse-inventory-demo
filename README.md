@@ -9,7 +9,50 @@ A sample application for demonstrating OpenChoreo deployments. Features a Go bac
 - OpenChoreo cluster running
 - `kubectl` configured to access the cluster
 
-### Deploy
+### Step 1: Set Up Database Secrets
+
+The backend workload requires database secret references to be configured before deployment. The API returns mock data when database connection fails, so you can use placeholder values if you don't have a real database.
+
+**Add credentials to ClusterSecretStore:**
+
+```bash
+kubectl edit clustersecretstore default
+```
+
+Add under `spec.provider.fake.data`:
+
+```yaml
+spec:
+  provider:
+    fake:
+      data:
+      # ... existing entries ...
+      - key: inventory-db-server
+        value: placeholder    # Or your real DB server
+      - key: inventory-db-port
+        value: "1433"
+      - key: inventory-db-user
+        value: placeholder    # Or your real DB username
+      - key: inventory-db-password
+        value: placeholder    # Or your real DB password
+      - key: inventory-db-name
+        value: placeholder    # Or your real DB name
+```
+
+**Apply SecretReferences:**
+
+```bash
+kubectl apply -f .openchoreo/db-secrets.yaml
+```
+
+**Verify secrets are synced:**
+
+```bash
+kubectl get secretreference
+kubectl get externalsecret -A
+```
+
+### Step 2: Deploy Components
 
 ```bash
 # Deploy backend and frontend
@@ -20,14 +63,14 @@ kubectl apply -f .openchoreo/inventory-dashboard.yaml
 kubectl get components -w
 ```
 
-### Access the Demo
+### Step 3: Access the Demo
 
 | Component | URL |
 |-----------|-----|
 | **Dashboard** | http://inventory-dashboard-development.openchoreoapis.localhost:19080/ |
 | **API** | http://development.openchoreoapis.localhost:19080/inventory-api/inventory |
 
-The backend returns mock data by default, so you can see the demo immediately without database setup.
+The backend returns mock data when database connection fails, so you can see the demo working even with placeholder secrets.
 
 ## What You'll See
 
@@ -47,15 +90,22 @@ The dashboard displays a warehouse inventory management interface:
 
 ## Connect a Real Database (Optional)
 
-To connect to a real MSSQL database instead of mock data:
+To switch from mock data to a real MSSQL database:
 
-1. **Add credentials to ClusterSecretStore** - See [docs/SECRETS_MANAGEMENT.md](docs/SECRETS_MANAGEMENT.md)
-2. **Apply SecretReferences**:
+1. **Update ClusterSecretStore** with real credentials:
    ```bash
-   kubectl apply -f .openchoreo/db-secrets.yaml
+   kubectl edit clustersecretstore default
    ```
-3. **Update the workload** to use secret references
-4. **Set up the database** - See [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md)
+   Replace placeholder values with your actual database credentials.
+
+2. **Set up the database schema** - See [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md)
+
+3. **Restart the API pod** to pick up the new credentials:
+   ```bash
+   kubectl delete pod -l openchoreo.dev/component=inventory-api -A
+   ```
+
+For more details on secrets management, see [docs/SECRETS_MANAGEMENT.md](docs/SECRETS_MANAGEMENT.md).
 
 ## Project Structure
 
