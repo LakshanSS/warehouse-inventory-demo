@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Package, AlertTriangle, RefreshCw, Search } from 'lucide-react'
+import { Package, AlertTriangle, RefreshCw, Search, Plus } from 'lucide-react'
 import { InventoryTable } from '@/components/InventoryTable'
 import { StockIndicator } from '@/components/StockIndicator'
-import { Product } from '@/lib/types'
+import { Modal } from '@/components/Modal'
+import { ProductForm } from '@/components/ProductForm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
+import { Product, CreateProductRequest } from '@/lib/types'
 
 function getApiUrl() {
   if (typeof window === 'undefined') return 'http://localhost:9090'
@@ -31,6 +34,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // CRUD state
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
+
   const fetchInventory = async () => {
     setLoading(true)
     setError(null)
@@ -50,6 +59,66 @@ export default function Home() {
   useEffect(() => {
     fetchInventory()
   }, [])
+
+  const createProduct = async (data: CreateProductRequest) => {
+    setActionLoading(true)
+    try {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create product')
+      }
+      setShowCreateModal(false)
+      await fetchInventory()
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const updateQuantity = async (data: CreateProductRequest) => {
+    if (!editingProduct) return
+    setActionLoading(true)
+    try {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/inventory/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: data.quantity }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update product')
+      }
+      setEditingProduct(null)
+      await fetchInventory()
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const deleteProduct = async () => {
+    if (!deletingProduct) return
+    setActionLoading(true)
+    try {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/inventory/${deletingProduct.id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok && response.status !== 204) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete product')
+      }
+      setDeletingProduct(null)
+      await fetchInventory()
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   const lowStockCount = products.filter(p => p.quantity <= 10).length
   const criticalStockCount = products.filter(p => p.quantity <= 5).length
@@ -127,10 +196,17 @@ export default function Home() {
           <button
             onClick={fetchInventory}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Add Product
           </button>
         </div>
 
@@ -147,9 +223,51 @@ export default function Home() {
             data={filteredProducts}
             loading={loading}
             onRefresh={fetchInventory}
+            onEdit={setEditingProduct}
+            onDelete={setDeletingProduct}
           />
         </div>
       </div>
+
+      {/* Create Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Add New Product"
+      >
+        <ProductForm
+          onSubmit={createProduct}
+          onCancel={() => setShowCreateModal(false)}
+          isLoading={actionLoading}
+        />
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={!!editingProduct}
+        onClose={() => setEditingProduct(null)}
+        title="Edit Quantity"
+      >
+        {editingProduct && (
+          <ProductForm
+            product={editingProduct}
+            onSubmit={updateQuantity}
+            onCancel={() => setEditingProduct(null)}
+            isLoading={actionLoading}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Confirmation */}
+      {deletingProduct && (
+        <DeleteConfirmDialog
+          isOpen={!!deletingProduct}
+          onClose={() => setDeletingProduct(null)}
+          onConfirm={deleteProduct}
+          productName={deletingProduct.name}
+          isLoading={actionLoading}
+        />
+      )}
     </main>
   )
 }

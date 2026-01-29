@@ -14,6 +14,7 @@ import {
 import { ArrowUpDown, ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import { Product } from '@/lib/types'
 import { StockBadge } from './StockBadge'
+import { ActionButtons } from './ActionButtons'
 
 const columnHelper = createColumnHelper<Product>()
 
@@ -21,9 +22,11 @@ interface InventoryTableProps {
   data: Product[]
   loading: boolean
   onRefresh: () => void
+  onEdit: (product: Product) => void
+  onDelete: (product: Product) => void
 }
 
-export function InventoryTable({ data, loading }: InventoryTableProps) {
+export function InventoryTable({ data, loading, onEdit, onDelete }: InventoryTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const columns = useMemo(
@@ -89,8 +92,19 @@ export function InventoryTable({ data, loading }: InventoryTableProps) {
           )
         },
       }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <ActionButtons
+            product={row.original}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ),
+      }),
     ],
-    []
+    [onEdit, onDelete]
   )
 
   const table = useReactTable({
