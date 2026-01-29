@@ -21,7 +21,7 @@
 apiVersion: openchoreo.dev/v1alpha1
 kind: WorkflowRun
 metadata:
-  name: provision-inventory-db-run
+  name: provision-inventory-db-run-1
 spec:
   workflow:
     name: provision-azure-sql-database
@@ -36,6 +36,6 @@ spec:
       database:
         serverName: "pge-demo-db-server-1"
         name: "pge-demo-db-1"
-        sku: "GP_S_Gen5_2"
+        sku: "Basic"
       output:
         secretNamespace: "default"
