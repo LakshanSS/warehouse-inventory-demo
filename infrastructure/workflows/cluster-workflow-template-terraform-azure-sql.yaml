@@ -277,7 +277,7 @@ spec:
     - name: save-to-secret
       serviceAccountName: workflow-sa
       container:
-        image: bitnami/kubectl:1.28
+        image: bitnami/kubectl:latest
         command:
           - sh
           - -c
