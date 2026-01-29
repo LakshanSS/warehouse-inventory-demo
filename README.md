@@ -107,6 +107,10 @@ To switch from mock data to a real MSSQL database:
 
 For more details on secrets management, see [docs/SECRETS_MANAGEMENT.md](docs/SECRETS_MANAGEMENT.md).
 
+## Enable Auto Build (Optional)
+
+To enable automatic builds when code is pushed to the Git repository, follow the [Auto Build documentation](https://openchoreo.dev/docs/operations/auto-build/).
+
 ## Project Structure
 
 ```
