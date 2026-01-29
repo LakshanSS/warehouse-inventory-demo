@@ -1,0 +1,35 @@
+# Component definition for inventory-api-gitops
+# This component uses the same source as inventory-api but is deployed via GitOps
+# Note: No autoDeploy or workflow section - deployment is handled via GitOps PRs
+
+apiVersion: openchoreo.dev/v1alpha1
+kind: Component
+metadata:
+  name: inventory-api-gitops
+spec:
+  owner:
+    projectName: default
+  componentType: deployment/service
+  parameters:
+    exposed: true
+    replicas: 1
+    port: 9090
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 9090
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 9090
+      initialDelaySeconds: 5
+      periodSeconds: 10

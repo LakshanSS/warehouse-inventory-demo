@@ -7,7 +7,7 @@ endpoints:
   - name: inventory-api
     port: 9090
     type: REST
-    schemaFile: docs/openapi.yaml
+    # schemaFile: docs/openapi.yaml
 
 configurations:
   env:

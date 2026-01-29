@@ -1,0 +1,45 @@
+# GitOps Workflow Run for Inventory Dashboard GitOps Component
+# Uses the same source code as inventory-dashboard but deployed via GitOps flow
+#
+# IMPORTANT: Uses docker-gitops-release (NOT react-gitops-release) because:
+# - Next.js with output: 'standalone' requires Node.js runtime
+# - react-gitops-release packages into nginx (for static SPAs only)
+# - The dashboard Dockerfile properly handles Next.js standalone build
+#
+# Prerequisites:
+#   1. Install workflow: kubectl apply -f samples/gitops-workflows/component-workflows/build-and-release/docker/
+#   2. Configure tokens in ClusterSecretStore (git-token, gitops-token)
+#   3. Create Component: kubectl apply -f demo/.openchoreo/inventory-dashboard-gitops.yaml
+#
+# Usage:
+#   kubectl apply -f demo/gitops/inventory-dashboard-gitops-run.yaml
+#
+# To re-run: increment the name (e.g., inventory-dashboard-gitops-release-002)
+
+apiVersion: openchoreo.dev/v1alpha1
+kind: ComponentWorkflowRun
+metadata:
+  name: inventory-dashboard-gitops-release-001
+  namespace: default
+spec:
+  owner:
+    projectName: "default"
+    componentName: "inventory-dashboard-gitops"
+  workflow:
+    name: docker-gitops-release
+    systemParameters:
+      repository:
+        url: "https://github.com/LakshanSS/warehouse-inventory-demo"
+        revision:
+          branch: "main"
+        appPath: "/inventory-dashboard"
+    parameters:
+      docker:
+        context: "/inventory-dashboard"
+        filePath: "/inventory-dashboard/Dockerfile"
+      gitops:
+        repositoryUrl: "https://github.com/LakshanSS/warehouse-inventory-gitops"
+        branch: "main"
+        targetEnvironment: "development"
+        deploymentPipeline: "simple-pipeline"
+      workloadDescriptorPath: "workload.yaml"
